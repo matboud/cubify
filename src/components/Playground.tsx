@@ -11,7 +11,7 @@ import type { MaterialPreset } from "@/app/page";
 const ORBIT_SPEED  = 0.025;
 const DOLLY_FACTOR = 0.97; // zoom-in multiplier (<1 shrinks the radius)
 const MIN_DISTANCE = 2;
-const MAX_DISTANCE = 12;
+const MAX_DISTANCE = 30;
 
 // Polar angle limits — kept a hair away from 0 and π so the camera never
 // flips when it passes directly over the top or bottom of the box.
