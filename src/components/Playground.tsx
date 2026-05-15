@@ -48,19 +48,18 @@ type ZoomKey  = "ZoomIn" | "ZoomOut";
 // Textures
 // ---------------------------------------------------------------------------
 
-const texLoader = new THREE.TextureLoader();
-
-function loadWoodMaps() {
-  const diff  = texLoader.load("/textures/wood/diff.jpg");
-  const nor   = texLoader.load("/textures/wood/nor.jpg");
-  const rough = texLoader.load("/textures/wood/rough.jpg");
-  const ao    = texLoader.load("/textures/wood/ao.jpg");
-
+function loadWoodMaps(onAllLoaded: () => void) {
+  // Each call gets its own LoadingManager so the callback fires exactly when
+  // all four maps for this particular material build are done.
+  const manager = new THREE.LoadingManager(onAllLoaded);
+  const loader  = new THREE.TextureLoader(manager);
+  const diff    = loader.load("/textures/wood/diff.jpg");
+  const nor     = loader.load("/textures/wood/nor.jpg");
+  const rough   = loader.load("/textures/wood/rough.jpg");
+  const ao      = loader.load("/textures/wood/ao.jpg");
   // Only the diffuse/albedo map is perceptually encoded (sRGB).
-  // Normal, roughness, and AO maps are linear data — correcting their
-  // color space would shift the values and break the shading.
+  // Normal, roughness, and AO maps carry linear data.
   diff.colorSpace = THREE.SRGBColorSpace;
-
   return { diff, nor, rough, ao };
 }
 
@@ -71,11 +70,12 @@ function loadWoodMaps() {
 
 function buildMaterial(
   preset: MaterialPreset | null,
-  color: string
+  color: string,
+  onLoad: () => void = () => {}
 ): THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial {
 
   if (preset === "wood") {
-    const { diff, nor, rough, ao } = loadWoodMaps();
+    const { diff, nor, rough, ao } = loadWoodMaps(onLoad);
     return new THREE.MeshStandardMaterial({
       map:            diff,
       normalMap:      nor,
@@ -86,6 +86,9 @@ function buildMaterial(
       metalness: 0,
     });
   }
+
+  // All other presets are fully synchronous — signal completion immediately.
+  onLoad();
 
   if (preset === "metal") {
     return new THREE.MeshStandardMaterial({
@@ -264,10 +267,12 @@ interface Props {
   preset:       MaterialPreset | null;
   isStretching: boolean;
   isDark:       boolean;
+  rendered:     boolean;
+  onRender:     () => void;
 }
 
-export default function Playground({ color, preset, isStretching, isDark }: Readonly<Props>) {
-  const [rendered, setRendered] = useState(false);
+export default function Playground({ color, preset, isStretching, isDark, rendered, onRender }: Readonly<Props>) {
+  const [isLoadingTextures, setIsLoadingTextures] = useState(false);
   const mountRef  = useRef<HTMLDivElement>(null);
   const keysRef   = useRef<Set<string>>(new Set());
   const meshRef   = useRef<THREE.Mesh | null>(null);
@@ -336,7 +341,8 @@ export default function Playground({ color, preset, isStretching, isDark }: Read
     // rebuilding BoxGeometry on every stretch keeps the frame rate smooth.
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     geometry.setAttribute("uv2", geometry.getAttribute("uv"));
-    const material = buildMaterial(preset, color);
+    setIsLoadingTextures(preset === "wood");
+    const material = buildMaterial(preset, color, () => setIsLoadingTextures(false));
     const box = new THREE.Mesh(geometry, material);
     const { w, h, d } = dimensionsRef.current;
     box.scale.set(w, h, d);
@@ -553,8 +559,9 @@ export default function Playground({ color, preset, isStretching, isDark }: Read
   // Live material swap — fires when the user picks a different color or preset.
   useEffect(() => {
     if (meshRef.current) {
+      setIsLoadingTextures(preset === "wood");
       disposeMaterial(meshRef.current.material);
-      meshRef.current.material = buildMaterial(preset, color);
+      meshRef.current.material = buildMaterial(preset, color, () => setIsLoadingTextures(false));
     }
   }, [preset, color]);
 
@@ -563,7 +570,7 @@ export default function Playground({ color, preset, isStretching, isDark }: Read
       {!rendered ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <button
-            onClick={() => setRendered(true)}
+            onClick={onRender}
             className="px-8 py-4 rounded-xl bg-indigo-500 text-white font-semibold text-base tracking-wide hover:bg-indigo-400 active:scale-95 transition-all duration-150 shadow-lg shadow-indigo-500/30"
           >
             Render a box
@@ -572,6 +579,17 @@ export default function Playground({ color, preset, isStretching, isDark }: Read
       ) : (
         <>
           <div ref={mountRef} className="w-full h-full" />
+
+          {isLoadingTextures && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[2px] bg-[#f2f2f2]/60 dark:bg-[#0f0f0f]/60">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-7 h-7 rounded-full border-2 border-black/10 dark:border-white/15 border-t-black/60 dark:border-t-white/80 animate-spin" />
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/40 dark:text-white/50">
+                  Loading
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
             <DPad keysRef={keysRef} />
