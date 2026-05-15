@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Playground from "@/components/Playground";
-import Settings    from "@/components/Settings";
+import dynamic    from "next/dynamic";
+import Settings   from "@/components/Settings";
+
+// Playground depends on Three.js (~500 KB). Dynamically importing it keeps
+// Three.js out of the initial bundle, cutting parse time and TBT.
+const Playground = dynamic(() => import("@/components/Playground"), {
+  ssr:     false,
+  loading: () => <div className="w-full h-full bg-[#f2f2f2] dark:bg-[#0f0f0f]" />,
+});
 
 // Exported so both Playground and Settings can reference the same type
 // without creating a separate types file just for a four-value union.
