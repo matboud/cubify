@@ -28,8 +28,9 @@ const MATERIALS: {
     id:    "wood",
     label: "Wood",
     preview: {
-      background:
-        "repeating-linear-gradient(91deg, #3D1F0A 0px, #6B3A1F 3px, #8B5A2E 7px, #7A4520 11px, #5C3017 15px, #A07040 19px, #6B3A1F 23px)",
+      backgroundImage:    "url('/textures/wood/diff.jpg')",
+      backgroundSize:     "cover",
+      backgroundPosition: "center",
     },
   },
   {
@@ -104,6 +105,7 @@ interface Props {
   onStretchChange: (value: boolean) => void;
   isDark:          boolean;
   onToggleDark:    () => void;
+  isReady:         boolean;
 }
 
 export default function Settings({
@@ -115,6 +117,7 @@ export default function Settings({
   onStretchChange,
   isDark,
   onToggleDark,
+  isReady,
 }: Readonly<Props>) {
   // Clicking the active preset a second time deselects it and returns
   // control back to whichever color was selected before.
@@ -135,15 +138,14 @@ export default function Settings({
           <button
             onClick={onToggleDark}
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="flex items-center justify-center w-7 h-7 rounded-lg
-              text-black/40 dark:text-white/35
-              hover:text-black/70 dark:hover:text-white/60
-              hover:bg-black/5 dark:hover:bg-white/8
-              transition-all duration-150"
+            className="flex items-center justify-center w-7 h-7 rounded-lg text-black/40 dark:text-white/35 hover:text-black/70 dark:hover:text-white/60 hover:bg-black/5 dark:hover:bg-white/8 transition-all duration-150"
           >
             {isDark ? <SunIcon /> : <MoonIcon />}
           </button>
         </div>
+
+        {/* Color / Material / Transform — locked until the box is rendered */}
+        <div className={`flex flex-col gap-6 transition-opacity duration-300 ${isReady ? "" : "opacity-30 pointer-events-none select-none"}`}>
 
         {/* Color ---------------------------------------------------------- */}
         <section>
@@ -256,6 +258,8 @@ export default function Settings({
             )}
           </button>
         </section>
+
+        </div>{/* end isReady gate */}
 
       </div>
     </div>

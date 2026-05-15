@@ -13,6 +13,7 @@ export default function Home() {
   const [preset,       setPreset]       = useState<MaterialPreset | null>(null);
   const [isStretching, setIsStretching] = useState(false);
   const [isDark,       setIsDark]       = useState(true);
+  const [boxRendered,  setBoxRendered]  = useState(false);
 
   // Keep the <html> class in sync with the toggle so every dark: utility
   // in the tree responds — the initial "dark" class is set in layout.tsx
@@ -38,6 +39,8 @@ export default function Home() {
           preset={preset}
           isStretching={isStretching}
           isDark={isDark}
+          rendered={boxRendered}
+          onRender={() => setBoxRendered(true)}
         />
       </div>
 
@@ -52,6 +55,7 @@ export default function Home() {
           onStretchChange={setIsStretching}
           isDark={isDark}
           onToggleDark={() => setIsDark(d => !d)}
+          isReady={boxRendered}
         />
       </div>
     </div>
