@@ -9,8 +9,9 @@ import Settings    from "@/components/Settings";
 export type MaterialPreset = "wood" | "metal" | "glass" | "plastic";
 
 export default function Home() {
-  const [color,  setColor]  = useState("#6366f1");
-  const [preset, setPreset] = useState<MaterialPreset | null>(null);
+  const [color,       setColor]       = useState("#6366f1");
+  const [preset,      setPreset]      = useState<MaterialPreset | null>(null);
+  const [isStretching, setIsStretching] = useState(false);
 
   // Picking a color clears the active preset — they're mutually exclusive.
   // A preset owns its own color(s), so letting both be active simultaneously
@@ -21,19 +22,21 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-full">
-      {/* Left — 3D viewport takes the remaining width */}
-      <div className="flex-1 min-w-0">
-        <Playground color={color} preset={preset} />
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Viewport — takes all remaining space; min-h-0 lets flex shrink it */}
+      <div className="flex-1 min-h-0 min-w-0">
+        <Playground color={color} preset={preset} isStretching={isStretching} />
       </div>
 
-      {/* Right — fixed-width settings panel */}
-      <div className="w-72 shrink-0 border-l border-white/10">
+      {/* Settings — bottom strip on mobile, full-height sidebar on md+ */}
+      <div className="h-56 md:h-full md:w-72 shrink-0 border-t md:border-t-0 md:border-l border-white/10">
         <Settings
           color={color}
           onColorChange={handleColorChange}
           preset={preset}
           onPresetChange={setPreset}
+          isStretching={isStretching}
+          onStretchChange={setIsStretching}
         />
       </div>
     </div>

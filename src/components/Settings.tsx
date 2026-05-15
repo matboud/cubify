@@ -60,11 +60,30 @@ const MATERIALS: {
   },
 ];
 
+function StretchIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-4 h-4 shrink-0"
+    >
+      {/* Four corner arrows — the universal "resize" symbol */}
+      <path d="M3 3h5M3 3v5M21 3h-5M21 3v5M3 21h5M3 21v-5M21 21h-5M21 21v-5" />
+    </svg>
+  );
+}
+
 interface Props {
-  color:          string;
-  onColorChange:  (hex: string) => void;
-  preset:         MaterialPreset | null;
-  onPresetChange: (id: MaterialPreset | null) => void;
+  color:           string;
+  onColorChange:   (hex: string) => void;
+  preset:          MaterialPreset | null;
+  onPresetChange:  (id: MaterialPreset | null) => void;
+  isStretching:    boolean;
+  onStretchChange: (value: boolean) => void;
 }
 
 export default function Settings({
@@ -72,6 +91,8 @@ export default function Settings({
   onColorChange,
   preset,
   onPresetChange,
+  isStretching,
+  onStretchChange,
 }: Readonly<Props>) {
   // Clicking the active preset a second time deselects it and returns
   // control back to whichever color was selected before.
@@ -168,6 +189,34 @@ export default function Settings({
               );
             })}
           </div>
+        </section>
+
+        <div className="border-t border-white/[0.07]" />
+
+        {/* Transform ------------------------------------------------------- */}
+        <section>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/30 mb-3">
+            Transform
+          </p>
+          <button
+            onClick={() => onStretchChange(!isStretching)}
+            className={`
+              w-full flex items-center gap-3 px-3 py-3 rounded-xl
+              border transition-all duration-200 active:scale-95
+              ${isStretching
+                ? "border-indigo-500/50 bg-indigo-500/15 text-indigo-300"
+                : "border-white/10 bg-white/3 text-white/45 hover:text-white/70 hover:bg-white/6 hover:border-white/20"
+              }
+            `}
+          >
+            <StretchIcon />
+            <span className="text-xs font-medium">Stretch Mode</span>
+            {isStretching && (
+              <span className="ml-auto text-[10px] font-semibold text-indigo-400">
+                Active
+              </span>
+            )}
+          </button>
         </section>
 
       </div>
