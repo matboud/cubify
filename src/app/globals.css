@@ -6,3 +6,6 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+/* Use the .dark class on <html> for dark mode (class strategy). */
+@variant dark (&:where(.dark, .dark *));

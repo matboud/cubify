@@ -11,7 +11,7 @@ import type { MaterialPreset } from "@/app/page";
 const ORBIT_SPEED  = 0.025;
 const DOLLY_FACTOR = 0.97; // zoom-in multiplier (<1 shrinks the radius)
 const MIN_DISTANCE = 2;
-const MAX_DISTANCE = 12;
+const MAX_DISTANCE = 30;
 
 // Polar angle limits — kept a hair away from 0 and π so the camera never
 // flips when it passes directly over the top or bottom of the box.
@@ -169,11 +169,12 @@ function DPadButton({
       onPointerDown={press} onPointerUp={release} onPointerLeave={release}
       onContextMenu={(e) => e.preventDefault()}
       className="flex items-center justify-center w-12 h-12 rounded-xl
-        bg-white/5 border border-white/10 text-white/60 hover:text-white
-        hover:bg-white/10 hover:border-white/20
+        bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10
+        text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white
+        hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20
         active:scale-90 active:bg-indigo-500/30 active:border-indigo-400/50 active:text-indigo-300
         transition-all duration-100 select-none cursor-pointer
-        shadow-lg shadow-black/40 backdrop-blur-sm"
+        shadow-lg shadow-black/20 dark:shadow-black/40 backdrop-blur-sm"
       aria-label={direction}
     >
       <ChevronIcon dir={direction} />
@@ -232,7 +233,8 @@ function ZoomButton({
       onContextMenu={(e) => e.preventDefault()}
       aria-label={action === "ZoomIn" ? "Zoom in" : "Zoom out"}
       className="flex items-center justify-center w-11 h-11
-        bg-white/5 text-white/60 hover:bg-white/10 hover:text-white
+        bg-black/5 dark:bg-white/5 text-black/60 dark:text-white/60
+        hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white
         active:bg-indigo-500/30 active:text-indigo-300
         transition-all duration-100 select-none cursor-pointer"
     >
@@ -243,8 +245,8 @@ function ZoomButton({
 
 function ZoomControls({ keysRef }: Readonly<{ keysRef: React.RefObject<Set<string>> }>) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-white/10
-      shadow-lg shadow-black/40 backdrop-blur-sm">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-black/10 dark:border-white/10
+      shadow-lg shadow-black/20 dark:shadow-black/40 backdrop-blur-sm">
       <ZoomButton action="ZoomIn"  keysRef={keysRef} />
       <div className="border-t border-white/10" />
       <ZoomButton action="ZoomOut" keysRef={keysRef} />
@@ -261,9 +263,10 @@ interface Props {
   color:        string;
   preset:       MaterialPreset | null;
   isStretching: boolean;
+  isDark:       boolean;
 }
 
-export default function Playground({ color, preset, isStretching }: Readonly<Props>) {
+export default function Playground({ color, preset, isStretching, isDark }: Readonly<Props>) {
   const [rendered, setRendered] = useState(false);
   const mountRef  = useRef<HTMLDivElement>(null);
   const keysRef   = useRef<Set<string>>(new Set());
@@ -273,11 +276,13 @@ export default function Playground({ color, preset, isStretching }: Readonly<Pro
   // once at scene setup) always read the latest values without stale closures.
   const dimensionsRef = useRef({ w: 1.6, h: 1.6, d: 1.6 });
 
-  // Functions written by the scene-setup effect so the isStretching effect
-  // can show/hide handles without needing direct scene access.
-  const showHandlesFn = useRef<(() => void) | null>(null);
-  const hideHandlesFn = useRef<(() => void) | null>(null);
+  // Functions written by the scene-setup effect so reactive effects
+  // can reach into the Three.js scene without needing direct access.
+  const showHandlesFn  = useRef<(() => void) | null>(null);
+  const hideHandlesFn  = useRef<(() => void) | null>(null);
+  const setSceneBgFn   = useRef<((dark: boolean) => void) | null>(null);
   const isStretchingRef = useRef(isStretching);
+  const isDarkRef       = useRef(isDark);
 
   // Keep the ref in sync whenever the prop changes.
   // The pointer handlers read the ref so they always see the current mode.
@@ -287,6 +292,12 @@ export default function Playground({ color, preset, isStretching }: Readonly<Pro
     else              hideHandlesFn.current?.();
   }, [isStretching]);
 
+  // Sync the Three.js scene background whenever the theme toggles.
+  useEffect(() => {
+    isDarkRef.current = isDark;
+    setSceneBgFn.current?.(isDark);
+  }, [isDark]);
+
   // Scene setup — runs once when the user clicks "Render a box".
   useEffect(() => {
     if (!rendered || !mountRef.current) return;
@@ -294,7 +305,9 @@ export default function Playground({ color, preset, isStretching }: Readonly<Pro
     const container = mountRef.current;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#0f0f0f");
+    const bgColor = new THREE.Color(isDarkRef.current ? "#0f0f0f" : "#f2f2f2");
+    scene.background = bgColor;
+    setSceneBgFn.current = (dark) => { bgColor.set(dark ? "#0f0f0f" : "#f2f2f2"); };
 
     const camera = new THREE.PerspectiveCamera(
       55, container.clientWidth / container.clientHeight, 0.1, 1000
@@ -531,6 +544,7 @@ export default function Playground({ color, preset, isStretching }: Readonly<Pro
       renderer.dispose();
       showHandlesFn.current = null;
       hideHandlesFn.current = null;
+      setSceneBgFn.current  = null;
       meshRef.current = null;
       renderer.domElement.remove();
     };
@@ -545,7 +559,7 @@ export default function Playground({ color, preset, isStretching }: Readonly<Pro
   }, [preset, color]);
 
   return (
-    <div className="relative w-full h-full bg-[#0f0f0f]">
+    <div className="relative w-full h-full bg-[#f2f2f2] dark:bg-[#0f0f0f]">
       {!rendered ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <button

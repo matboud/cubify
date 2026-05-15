@@ -23,11 +23,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full dark`}
     >
       {/* overflow-hidden prevents the Three.js canvas from briefly pushing
           the body to a scrollable size during window resize events. */}
-      <body className="h-full overflow-hidden bg-[#0f0f0f] text-white antialiased">
+      <body className="h-full overflow-hidden bg-[#f2f2f2] dark:bg-[#0f0f0f] text-gray-900 dark:text-white antialiased">
         {children}
       </body>
     </html>
