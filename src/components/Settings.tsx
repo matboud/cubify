@@ -1,5 +1,6 @@
 "use client";
 
+import Image            from "next/image";
 import type { MaterialPreset } from "@/app/page";
 
 const COLORS = [
@@ -17,21 +18,19 @@ const COLORS = [
   { hex: "#27272a", label: "Dark"   },
 ];
 
-// CSS gradient previews that hint at each material's texture without
-// needing to spin up a Three.js scene inside the settings panel.
+// CSS gradient previews that hint at each material's texture. Wood uses the
+// real diffuse map (via next/image so it's served as optimised WebP at the
+// right display size instead of the raw 2.7 MB JPEG).
 const MATERIALS: {
-  id:      MaterialPreset;
-  label:   string;
-  preview: React.CSSProperties;
+  id:       MaterialPreset;
+  label:    string;
+  preview?: React.CSSProperties;
+  imageSrc?: string;
 }[] = [
   {
-    id:    "wood",
-    label: "Wood",
-    preview: {
-      backgroundImage:    "url('/textures/wood/diff.jpg')",
-      backgroundSize:     "cover",
-      backgroundPosition: "center",
-    },
+    id:       "wood",
+    label:    "Wood",
+    imageSrc: "/textures/wood/diff.jpg",
   },
   {
     id:    "metal",
@@ -181,7 +180,7 @@ export default function Settings({
             Material
           </p>
           <div className="grid grid-cols-2 gap-2.5">
-            {MATERIALS.map(({ id, label, preview }) => {
+            {MATERIALS.map(({ id, label, preview, imageSrc }) => {
               const selected = preset === id;
               return (
                 <button
@@ -197,7 +196,19 @@ export default function Settings({
                     }
                   `}
                 >
-                  <div className="h-14 w-full" style={preview} />
+                  <div className="relative h-14 w-full overflow-hidden">
+                    {imageSrc ? (
+                      <Image
+                        src={imageSrc}
+                        alt={label}
+                        fill
+                        sizes="144px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0" style={preview} />
+                    )}
+                  </div>
 
                   <div
                     className={`
