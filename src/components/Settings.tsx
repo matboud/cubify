@@ -153,13 +153,7 @@ export default function Settings({
             Color
           </p>
 
-          {/* Dim the palette when a material preset is active — it makes it
-              obvious that the preset is controlling appearance, not the color. */}
-          <div
-            className={`grid grid-cols-4 gap-2 transition-opacity duration-300 ${
-              preset ? "opacity-30 pointer-events-none" : "opacity-100"
-            }`}
-          >
+          <div className="grid grid-cols-4 gap-2">
             {COLORS.map(({ hex, label }) => {
               const selected = !preset && color === hex;
               return (
